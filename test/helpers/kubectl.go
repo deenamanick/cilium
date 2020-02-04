@@ -1396,6 +1396,11 @@ func (kub *Kubectl) ciliumInstallHelm(filename string, options map[string]string
 		return err
 	}
 
+	// Remove cilium DS to ensure that new instances of cilium-agent are started
+	// for the newly generated ConfigMap. Otherwise, the CM changes will stay
+	// inactive until each cilium-agent has been restarted.
+	_ = kub.DeleteResource("ds", fmt.Sprintf("-n %s cilium", GetCiliumNamespace(GetCurrentIntegration())))
+
 	res := kub.Apply(ApplyOptions{FilePath: filename, Force: true, Namespace: GetCiliumNamespace(GetCurrentIntegration())})
 	if !res.WasSuccessful() {
 		return res.GetErr("Unable to apply YAML")
